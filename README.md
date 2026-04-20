@@ -49,7 +49,7 @@ pip install fastapi uvicorn streamlit inngest qdrant-client sentence-transformer
 Create a ".env" file in the project root with the following content:
 
 ```env
-# Groq API Key (для LLM)
+# Groq API Key (for LLM)
 GROQ_API_KEY=your_groq_api_key_here
 
 # Qdrant Configuration
