@@ -10,7 +10,6 @@ class QdrantStorage:
         dim=384,
         api_key=None
     ):
-        # ИСПРАВЛЕНО: Убраны пробелы в ключах и значениях
         self.url = url or os.getenv("QDRANT_URL", "http://localhost:6333")
         self.api_key = api_key or os.getenv("QDRANT_API_KEY")
 
@@ -21,7 +20,6 @@ class QdrantStorage:
         )
         self.collection = collection
 
-        # ИСПРАВЛЕНО: Правильное имя метода collection_exists (без пробелов)
         if not self.client.collection_exists(self.collection):
             self.client.create_collection(
                 collection_name=self.collection,
@@ -30,11 +28,9 @@ class QdrantStorage:
 
     def upsert(self, ids, vectors, payloads):
         points = [PointStruct(id=ids[i], vector=vectors[i], payload=payloads[i]) for i in range(len(ids))]
-        # ИСПРАВЛЕНО: Правильное имя метода upsert (без пробелов)
         self.client.upsert(self.collection, points=points)
 
     def search(self, query_vector, top_k: int = 5):
-        # ИСПРАВЛЕНО: Правильное имя метода query_points и аргумента query (без пробелов)
         results = self.client.query_points(
             collection_name=self.collection,
             query=query_vector,
@@ -46,7 +42,6 @@ class QdrantStorage:
         sources = set()
 
         for r in results.points:
-            # ИСПРАВЛЕНО: Убраны пробелы в ключах словаря
             payload = getattr(r, "payload", None) or {}
             text = payload.get("text", "")
             source = payload.get("source", "")
