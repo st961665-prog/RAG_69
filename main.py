@@ -61,16 +61,15 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
         found = store.search(query_vec, top_k)
         return RAGSearchResult(contexts=found["contexts"], sources=found["sources"])
 
-    # ИСПРАВЛЕНО: Убраны пробелы в ключах
+
     question = ctx.event.data["question"]
-    # Ограничим top_k до 3 по умолчанию, чтобы не превышать лимит токенов
     top_k = int(ctx.event.data.get("top_k", 3))
 
     found = await ctx.step.run("embed-and-search", lambda: _search(question, top_k), output_type=RAGSearchResult)
 
     context_block = "\n\n".join(f"- {c}" for c in found.contexts)
 
-    # Проверка длины контекста (простая защита)
+
     if len(context_block) > 10000:
         context_block = context_block[:10000] + "... [truncated]"
 
@@ -83,7 +82,6 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
 
     adapter = ai.openai.Adapter(
         auth_key=os.getenv("GROQ_API_KEY"),
-        # ИСПРАВЛЕНО: Используем реальную существующую модель на Groq с большим контекстом
         model="llama-3.3-70b-versatile",
         base_url="https://api.groq.com/openai/v1"
     )
