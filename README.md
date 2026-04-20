@@ -1,53 +1,52 @@
-
 # RAG PDF Ingestion & Query System
 
-Этот проект реализует систему **RAG (Retrieval-Augmented Generation)** для загрузки PDF-документов, их индексации в векторной базе данных и последующего ответа на вопросы на основе содержимого этих документов.
+This project implements a **RAG (Retrieval-Augmented Generation)** system for uploading PDF documents, indexing them in a vector database, and answering questions based on their content.
 
-Система использует:
-*   **FastAPI** для бэкенда.
-*   **Streamlit** для фронтенда (загрузка файлов и чат).
-*   **Inngest** для оркестрации асинхронных задач (инжестия и генерация ответов).
-*   **Qdrant** в качестве векторной базы данных.
-*   **Groq API** (модель Llama 3) для генерации ответов LLM.
-*   **SentenceTransformers** для создания эмбеддингов.
+The system utilizes:
+*   **FastAPI** for the backend.
+*   **Streamlit** for the frontend (file upload and chat interface).
+*   **Inngest** for orchestrating asynchronous tasks (ingestion and answer generation).
+*   **Qdrant** as the vector database.
+*   **Groq API** (Llama 3 model) for LLM response generation.
+*   **SentenceTransformers** for creating embeddings.
 
-## 🏗 Архитектура
+## 🏗 Architecture
 
-Проект состоит из следующих основных модулей:
+The project consists of the following main modules:
 
-1.  **`data_load.py`**: Отвечает за чтение PDF-файлов, разбивку текста на чанки (chunks) с помощью `SentenceSplitter` и создание векторных представлений (эмбеддингов) с использованием модели `all-MiniLM-L6-v2`.
-2.  **`vec_db.py`**: Обертка над клиентом Qdrant. Управляет созданием коллекции, загрузкой векторов (`upsert`) и поиском похожих векторов (`search`).
-3.  **`custom_types.py`**: Содержит определения типов данных (Pydantic модели) для структурирования данных между шагами пайплайна (чанки, результаты поиска, ответы).
-4.  **`main.py`**: Ядро системы на FastAPI.
-    *   Определяет две функции Inngest:
-        *   `rag_ingest_pdf`: Триггерится при событии `rag/ingest_pdf`. Загружает PDF, чанкует, эмбеддит и сохраняет в Qdrant.
-        *   `rag_query_pdf_ai`: Триггерится при событии `rag/query_pdf_ai`. Ищет релевантные чанки по вопросу пользователя и генерирует ответ через Groq API.
-5.  **`frontend_app.py`**: Интерфейс на Streamlit.
-    *   Позволяет загружать PDF файлы.
-    *   Отправляет события в Inngest для обработки.
-    *   Отображает процесс выполнения задач, ожидая результата через polling локального API Inngest.
-    *   Предоставляет форму для ввода вопросов и отображает ответ с источниками.
+1.  **`data_load.py`**: Handles reading PDF files, splitting text into chunks using `SentenceSplitter`, and creating vector representations (embeddings) using the `all-MiniLM-L6-v2` model.
+2.  **`vec_db.py`**: A wrapper around the Qdrant client. Manages collection creation, vector uploading (`upsert`), and similar vector search (`search`).
+3.  **`custom_types.py`**: Contains data type definitions (Pydantic models) for structuring data between pipeline steps (chunks, search results, answers).
+4.  **`main.py`**: The core FastAPI application.
+    *   Defines two Inngest functions:
+        *   `rag_ingest_pdf`: Triggered by the `rag/ingest_pdf` event. Loads the PDF, chunks it, creates embeddings, and saves to Qdrant.
+        *   `rag_query_pdf_ai`: Triggered by the `rag/query_pdf_ai` event. Searches for relevant chunks based on the user's question and generates an answer via the Groq API.
+5.  **`frontend_app.py`**: The Streamlit interface.
+    *   Allows uploading PDF files.
+    *   Sends events to Inngest for processing.
+    *   Displays task execution status by polling the local Inngest API.
+    *   Provides a form for asking questions and displays the answer with sources.
 
-## 🚀 Требования
+## 🚀 Requirements
 
-Для работы проекта необходимо:
+To run the project, you need:
 *   Python 3.9+
-*   Установленные зависимости (см. ниже)
-*   Запущенный экземпляр **Qdrant** (локально или облачный).
-*   Запущенный сервер **Inngest Dev Server** (для локальной разработки).
-*   Ключи API для **Groq**.
+*   Installed dependencies (see below)
+*   A running instance of **Qdrant** (local or cloud).
+*   A running **Inngest Dev Server** (for local development).
+*   API keys for **Groq**.
 
-## ⚙️ Установка и настройка
+## ⚙️ Installation and Setup
 
-### 1. Клонирование репозитория и установка зависимостей
+### 1. Clone the repository and install dependencies
 
 ```bash
 pip install fastapi uvicorn streamlit inngest qdrant-client sentence-transformers llama-index python-dotenv pydantic requests
 ```
 
-### 2. Настройка переменных окружения
+### 2. Configure environment variables
 
-Создайте файл `.env` в корне проекта со следующим содержимым:
+Create a ".env" file in the project root with the following content:
 
 ```env
 # Groq API Key (для LLM)
@@ -57,71 +56,71 @@ GROQ_API_KEY=your_groq_api_key_here
 QDRANT_URL=http://localhost:6333
 # QDRANT_API_KEY=your_qdrant_api_key_if_needed
 
-# Inngest Configuration (для локальной разработки)
+# Inngest Configuration (for local development)
 INNGEST_API_BASE=http://127.0.0.1:8288/v1
 ```
 
-### 3. Запуск компонентов
+### 3. Launch components
 
-#### Шаг А: Запуск Inngest Dev Server
-В отдельном терминале запустите сервер разработки Inngest, чтобы он мог принимать события от приложения:
+#### Step A: Start Inngest Dev Server
+In a separate terminal, start the Inngest development server so it can receive events from the application:
 
 ```bash
 inngest dev --url http://localhost:8000
 ```
-*(Убедитесь, что порт совпадает с портом запуска FastAPI)*
+*(Ensure the port matches the port used to launch FastAPI)*
 
-#### Шаг Б: Запуск Qdrant
-Если вы используете Docker:
+#### Step B: Start Qdrant
+If you are using Docker:
 ```bash
 docker run -p 6333:6333 qdrant/qdrant
 ```
 
-#### Шаг В: Запуск Backend (FastAPI)
+#### Step C: Start Backend (FastAPI)
 ```bash
 uvicorn main:app --reload --port 8000
 ```
-Это зарегистрирует функции Inngest и откроет API документацию по адресу `http://localhost:8000/docs`.
+This will register the Inngest functions and open the API documentation at `http://localhost:8000/docs`.
 
-#### Шаг Г: Запуск Frontend (Streamlit)
-В новом терминале:
+#### Step D: Start Frontend (Streamlit)
+In a new terminal:
 ```bash
 streamlit run frontend_app.py
 ```
-Интерфейс будет доступен по адресу `http://localhost:8501`.
+The interface will be available at http://localhost:8501.
 
-## 📖 Как использовать
+## 📖 How to Use
 
-1.  Откройте веб-интерфейс Streamlit.
-2.  **Загрузка документа:**
-    *   Перейдите в секцию "Upload a PDF to Ingest".
-    *   Выберите PDF файл и нажмите кнопку загрузки.
-    *   Система отправит событие в Inngest, который запустит процесс парсинга, чанкинга и сохранения в векторную базу. Вы увидите статус успеха после завершения.
-3.  **Задание вопроса:**
-    *   Перейдите в секцию "Ask a question about your PDFs".
-    *   Введите ваш вопрос.
-    *   Укажите количество контекстных чанков (`top_k`), которые нужно учитывать (по умолчанию 5).
-    *   Нажмите "Ask".
-4.  **Получение ответа:**
-    *   Приложение подождет выполнения задачи в Inngest.
-    *   После завершения отобразится сгенерированный ответ и список источников (имена файлов/чанков), на которых он основан.
+1.  Open the Streamlit web interface.
+2.  **Upload a Document:**
+    *   Go to the "Upload a PDF to Ingest" section.
+    *   Select a PDF file and click the upload button.
+    *    The system will send an event to Inngest, which will start the parsing, chunking, and saving process to the vector database. You will see a success status upon completion.
+3.  **Ask a Question:**
+    *   Go to the "Ask a question about your PDFs" section.
+    *   Enter your question.
+    *   Specify the number of contextual chunks (top_k) to consider (default is 5).
+    *   Click "Ask".
+4.  **Get an Answer:**
+    *   The application will wait for the Inngest task to complete.
+    *   Once finished, the generated answer and the list of sources (file names/chunks) it is based on will be displayed.
 
-## 🔧 Технические детали
+## 🔧 Technical Details
 
-*   **Модель эмбеддингов:** `all-MiniLM-L6-v2` (размерность вектора 384).
-*   **Метрика расстояния:** Cosine Similarity.
-*   **LLM Модель:** `llama-3.3-70b-versatile` через провайдера Groq.
-*   **Размер чанка:** 1000 символов с перекрытием (overlap) 200 символов.
-*   **Ограничения:**
-    *   Инжестия ограничена троттлингом: 2 события в минуту.
-    *   Rate limit на источник: 1 событие в 4 часа для одного файла (чтобы избежать дублирования при повторной загрузке того же файла).
-    *   Максимальная длина контекста перед отправкой в LLM обрезается до 10,000 символов.
+*   **Embedding Model:** `all-MiniLM-L6-v2` (vector dimension 384).
+*   **Distance Metric:** Cosine Similarity.
+*   **LLM Model:** `llama-3.3-70b-versatile` via Groq provider.
+*   **Chunk Size:** 1000 characters with an overlap of 200 characters.
+*   **Limitations:**
+    *   Ingestion is throttled: 2 events per minute.
+    *   Source rate limit: 1 event per 4 hours for the same file (to avoid duplication when re-uploading the same file).
+    *   Maximum context length before sending to LLM is truncated to 10,000 characters.
 
-## 🛠 Возможные проблемы
+## 🛠 Troubleshooting
 
-*   **Timeout при ожидании ответа:** Если обработка большого PDF занимает много времени, увеличьте параметр `timeout_s` в функции `wait_for_run_output` в `frontend_app.py`.
-*   **Ошибка подключения к Inngest:** Убедитесь, что `inngest dev` запущен и URL в `.env` (`INNGEST_API_BASE`) корректен.
-*   **Пробелы в ключах JSON:** В коде были исправлены потенциальные ошибки с лишними пробелами в ключах словарей (например, `"question "` -> `"question"`), убедитесь, что вы используете актуальные версии файлов.
+*   **Timeout while waiting for response:** If processing a large PDF takes a long time, increase the timeout_s parameter in the wait_for_run_output function in frontend_app.py.
+*   **Connection error to Inngest:** Ensure that inngest dev is running and that the URL in .env (INNGEST_API_BASE) is correct.
+*   **JSON key spaces:** Potential errors with extra spaces in dictionary keys (e.g., "question " -> "question") have been fixed in the code; ensure you are using the latest versions of the files.
 
 ---
-*Проект разработан для демонстрации возможностей RAG с использованием современных инструментов оркестрации и векторного поиска.*
+*Project developed to demonstrate RAG capabilities using modern orchestration tools and vector search.*
